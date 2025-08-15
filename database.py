@@ -88,14 +88,6 @@ def insertInvoiceRow():
     cur.execute("""INSERT INTO Invoice VALUES 
     (1, 1, 'uncollectible', null, '2025-07-30'),
     (2, 2, 'paid', '2025-07-12', '2025-07-30'), (3, 2, 'paid', '2025-08-04', '2025-08-30'), 
-    (4, 3, 'paid', '2025-08-04', '2025-08-20'), (5, 3, 'open', null, '2025-08-13')
+    (4, 3, 'paid', '2025-07-04', '2025-07-30'), (5, 3, 'open', null, '2025-08-13')
     """)
     connection.commit() 
-
-
-
-# cur.execute("DROP TABLE SubscriptionStatus")
-res = cur.execute("SELECT * FROM Invoice")
-
-
-print(res.fetchall())

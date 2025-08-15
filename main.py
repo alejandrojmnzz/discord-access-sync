@@ -2,113 +2,8 @@ from dotenv import load_dotenv
 import os
 import discord
 from discord.ext import commands
-
-import sqlite3
-
-connection = sqlite3.connect("academy.db")
-cur = connection.cursor()
-
-def createDB():
-    connection = sqlite3.connect("academy.db")
-
-def createInvoiceTable():
-    connection = sqlite3.connect("academy.db")
-    cur.execute(
-        """
-        CREATE TABLE Invoice(
-        id INT PRIMARY KEY,
-        user_id INT NOT NULL,
-        status TEXT NOT NULL, 
-        paid_at DATE NULLABLE,
-        due_date DATE NOT NULL,
-        FOREIGN KEY (status) REFERENCES InvoiceStatus(status)
-
-        )
-        """
-        )
-
-def createUserTable():
-    connection = sqlite3.connect("academy.db")
-    cur.execute(
-        """
-        CREATE TABLE User(
-        id INT PRIMARY KEY,
-        email TEXT NOT NULL,
-        first_name TEXT NOT NULL, 
-        last_name TEXT NOT NULL,
-        discord_user_id TEXT DATE NOT NULL
-
-        )
-        """
-        )
-def createProfileTable():
-    connection = sqlite3.connect("academy.db")
-    cur.execute(
-        """
-        CREATE TABLE ProfileAcademy(
-        id INT PRIMARY KEY,
-        user_id INT NOT NULL,
-        academy_id INT NOT NULL, 
-        FOREIGN KEY (user_id) REFERENCES User(id)
-        )
-        """
-        )
-
-        
-def deleteTable():
-    cur.execute("DROP TABLE Invoice")
-
-def insertUserRow():
-    cur.execute("""INSERT INTO User VALUES 
-    (1, 'alejandro@gmail.com', 'Alejandro', 'Jiménez', 1379943138247839985),
-    (2, 'miguel@gmail.com', 'Miguel', 'Gonzáles', 1390720076671357112),
-    (3, 'javier@gmail.com', 'Javier', 'García', 1350129598943465513)
-    """)
-    connection.commit() 
-
-def insertProfileRow():
-    cur.execute("""INSERT INTO ProfileAcademy VALUES
-    (1, 1, 30), (2, 2, 42), (3, 3, 42)
-    """)
-    connection.commit() 
-
-
-def insertCohortRow():
-    cur.execute("""INSERT INTO CohortUser VALUES 
-    (1, 1, 36, 'postponed', 'financial_hold'),
-    (2, 2, 48, 'higher_education', 'income_statement'),
-    (3, 3, 23, 'secondary', 'balance_sheet')
-    """)
-    connection.commit() 
-
-def insertSubscriptionRow():
-    cur.execute("""INSERT INTO Subscription VALUES 
-    (1, 1, 'canceled'),
-    (2, 2, 'active'),
-    (3, 3, 'past_due')
-    """)
-    connection.commit() 
-
-def insertInvoiceRow():
-    cur.execute("""INSERT INTO Invoice VALUES 
-    (1, 1, 'uncollectible', null, '2025-07-30'),
-    (2, 2, 'paid', '2025-07-12', '2025-07-30'), (3, 2, 'paid', '2025-08-04', '2025-08-30'), 
-    (4, 3, 'paid', '2025-08-04', '2025-08-20'), (5, 3, 'open', null, '2025-08-13')
-    """)
-    connection.commit() 
-
-
-
-# cur.execute("DROP TABLE SubscriptionStatus")
-res = cur.execute("SELECT discord_user_id FROM User")
-
-
-all_discord_ids = res.fetchall()
-
-
-for id in all_discord_ids:
-    print(id[0])
-
+from datetime import datetime, date, timedelta
+from database import cur
 
 load_dotenv()
 
@@ -117,24 +12,35 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+def add_role(guild, member_id):
+    if guild:
+        member = guild.get_member(member_id)
+        if member.bot == False:
+            member_role = discord.utils.get(guild.roles, id=int(os.getenv("ROLE_ID")))
+            return member.add_roles(member_role)
+    else:
+        print("Servidor no encontrado")
+        return
+                
+def remove_role(guild, member_id):
+      if guild:
+        member = guild.get_member(member_id)
+        if member.bot == False:
+            member_role = discord.utils.get(guild.roles, id=int(os.getenv("ROLE_ID")))
+            return member.remove_roles(member_role)
+        else:
+            print("Servidor no encontrado")
+            return
 @bot.event
 async def on_ready():
     print("ready to go")
-    # role = discord.utils.get(discord.guild.roles, id=1)
-    for guild in bot.guilds:
-        for member in guild.members:
-            if member.bot == False:
-                pass
-                # member_role = discord.utils.get(guild.roles, name="Member")
-                # await member.add_roles(member_role)
-            
-    res = cur.execute(f'''SELECT user.discord_user_id, user.first_name, sub.status AS sub_status, invoice.status AS invoice_status, invoice.due_date FROM User AS user
+    
+    guild = bot.get_guild(int(os.getenv("GUILD_ID")))
+
+    res = cur.execute(f'''SELECT user.discord_user_id, user.first_name, sub.status AS sub_status FROM User AS user
     INNER JOIN ProfileAcademy AS profile ON user.id = profile.user_id
     INNER JOIN CohortUser AS cohort ON profile.user_id = cohort.user_id
     INNER JOIN Subscription AS sub ON cohort.user_id = sub.user_id
-    INNER JOIN Invoice AS invoice ON sub.user_id = invoice.user_id
-
-
     WHERE academy_id = {os.getenv("ACADEMY_ID")} AND
     (educational_status != 'postponed' OR educational_status != 'dropped' OR educational_status != 'graduated_blocked') AND
     (financial_status != 'financial_hold' OR financial_status != 'collections')
@@ -144,20 +50,48 @@ async def on_ready():
 
     for user in res.fetchall():
         user_info = {}
-        index = 0
-        for key in res.description:
-            user_info[key[0]] = user[index]
-            index += 1
+        for i in range(len(res.description)):
+            user_info[res.description[i][0]] = user[i]
         users_info.append(user_info)
-
    
-
     for user in users_info:
-        print(user)
         if user["sub_status"] == "active" or user["sub_status"] == "trialing":
-            print(True)
-        else:
-            print(False)
+            await add_role(guild, int(user['discord_user_id']))
+            print(f'Rol added to {user["first_name"]}')
 
+
+        elif user["sub_status"] == "past_due":
+            res = cur.execute(f'''SELECT user.discord_user_id, invoice.status AS invoice_status, invoice.paid_at, invoice.due_date FROM User AS user
+            INNER JOIN Invoice AS invoice ON user.id = invoice.user_id
+            WHERE user.discord_user_id = {user["discord_user_id"]}
+            ''')
+
+            invoices = []
+
+            for user_invoice in res.fetchall():
+                invoices.append({"id": user_invoice[0], "due_date": user_invoice[3], "invoice_status": user_invoice[1]})
+
+            most_recent_invoice = max(invoices, key=lambda item: datetime.fromisoformat(item["due_date"]))
+            date_most_recent_invoice = datetime.strptime(most_recent_invoice["due_date"], '%Y-%m-%d').date()
+            expiring_day = date_most_recent_invoice + timedelta(days=int(os.getenv("GRACE_DAYS")))
+
+            if date.today() > date_most_recent_invoice and most_recent_invoice["invoice_status"] != "paid" and expiring_day > date.today():
+                await add_role(guild, int(user['discord_user_id']))
+                print(f'Rol added to {user["first_name"]}')
+
+            elif date.today() > date_most_recent_invoice and most_recent_invoice["invoice_status"] != "paid" and expiring_day < date.today():
+                await remove_role(guild, int(user['discord_user_id']))
+                print(f'Rol removed from {user["first_name"]}')
+
+    res = cur.execute(f'''SELECT user.discord_user_id, user.first_name FROM User AS user
+    INNER JOIN CohortUser AS cohort ON user.id = cohort.user_id
+    WHERE (educational_status == 'postponed' OR educational_status == 'dropped' OR educational_status == 'graduated_blocked') OR
+    (financial_status == 'financial_hold' OR financial_status == 'collections') OR
+    cohort.cohort_id == null
+    ''')
+
+    for user in res.fetchall():
+        await remove_role(guild, int(user[0]))
+        print(f'Rol removed from {user[1]}')
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))

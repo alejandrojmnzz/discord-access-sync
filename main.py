@@ -12,25 +12,41 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-def add_role(guild, member_id):
+async def add_role(guild, member_id, dry_run='false'):
     if guild:
         member = guild.get_member(member_id)
-        if member.bot == False:
+        if member and member.bot == False:
             member_role = discord.utils.get(guild.roles, id=int(os.getenv("ROLE_ID")))
-            return member.add_roles(member_role)
+            if member_role:
+                if dry_run != 'true':
+                    return member.add_roles(member_role)
+                else:
+                    print(f'[DRY RUN] Added role with ID {os.getenv('ROLE_ID')} to member {member.name}')
+            else:
+                print(f'Role with ID {os.getenv('ROLE_ID')} was not found')
+        elif not member:
+            print(f'User with ID {member_id} was not found')
     else:
         print("Servidor no encontrado")
         return
                 
-def remove_role(guild, member_id):
-      if guild:
+async def remove_role(guild, member_id, dry_run=False):
+    if guild:
         member = guild.get_member(member_id)
-        if member.bot == False:
+        if member and member.bot == False:
             member_role = discord.utils.get(guild.roles, id=int(os.getenv("ROLE_ID")))
-            return member.remove_roles(member_role)
-        else:
-            print("Servidor no encontrado")
-            return
+            if member_role:
+                if dry_run != 'true':
+                    return member.remove_roles(member_role)
+                else:
+                    print(f'[DRY RUN] Removed role with ID {os.getenv('ROLE_ID')} from member {member.name}')
+            else:
+                print(f'Role with ID {os.getenv('ROLE_ID')} was not found')
+        elif not member:
+            print(f'User with ID {member_id} was not found')
+    else:
+        print("Servidor no encontrado")
+        return
 @bot.event
 async def on_ready():
     print("ready to go")
@@ -56,9 +72,7 @@ async def on_ready():
    
     for user in users_info:
         if user["sub_status"] == "active" or user["sub_status"] == "trialing":
-            await add_role(guild, int(user['discord_user_id']))
-            print(f'Rol added to {user["first_name"]}')
-
+            await add_role(guild, int(user['discord_user_id']), os.getenv('DRY_RUN'))
 
         elif user["sub_status"] == "past_due":
             res = cur.execute(f'''SELECT user.discord_user_id, invoice.status AS invoice_status, invoice.paid_at, invoice.due_date FROM User AS user
@@ -76,12 +90,10 @@ async def on_ready():
             expiring_day = date_most_recent_invoice + timedelta(days=int(os.getenv("GRACE_DAYS")))
 
             if date.today() > date_most_recent_invoice and most_recent_invoice["invoice_status"] != "paid" and expiring_day > date.today():
-                await add_role(guild, int(user['discord_user_id']))
-                print(f'Rol added to {user["first_name"]}')
+                await add_role(guild, int(user['discord_user_id']), os.getenv('DRY_RUN'))
 
             elif date.today() > date_most_recent_invoice and most_recent_invoice["invoice_status"] != "paid" and expiring_day < date.today():
-                await remove_role(guild, int(user['discord_user_id']))
-                print(f'Rol removed from {user["first_name"]}')
+                await remove_role(guild, int(user['discord_user_id']), os.getenv('DRY_RUN'))
 
     res = cur.execute(f'''SELECT user.discord_user_id, user.first_name FROM User AS user
     INNER JOIN CohortUser AS cohort ON user.id = cohort.user_id
@@ -91,7 +103,6 @@ async def on_ready():
     ''')
 
     for user in res.fetchall():
-        await remove_role(guild, int(user[0]))
-        print(f'Rol removed from {user[1]}')
+        await remove_role(guild, int(user[0]), os.getenv('DRY_RUN'))
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))

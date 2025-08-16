@@ -4,7 +4,7 @@ Aplicación que utiliza discord.py y SQLite para agregar y eliminar roles a usua
 
 **Cómo ejecutar la aplicación**
 
-La aplicación se ejecuta, valida y asigna roles ocn un solo comando.
+La aplicación se ejecuta, valida y asigna roles con un solo comando.
 
 Primero, instala las dependencias necesarias:
 `pip install discord.py dotenv`.

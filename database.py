@@ -1,29 +1,17 @@
 import sqlite3
 
+# Se realiza una conexión a la base de datos creada y se crea un cursor de esa conexión para manejar consultas SQL
 connection = sqlite3.connect("academy.db")
 cur = connection.cursor()
+
+# El resto de funciones encontradas en este archivo, son funciones que no se ejecutan nunca al correr la aplicación
+# Estas funciones solo se utilizaron una vez de manera manual para crear la base de datos, crear tablas e insertar datos en ellas
+# Sin embargo, son útiles como documentación para visualizar el modelo de cada una de las tablas y los datos que hay dentro de cada una
 
 def createDB():
     connection = sqlite3.connect("academy.db")
 
-def createInvoiceTable():
-    connection = sqlite3.connect("academy.db")
-    cur.execute(
-        """
-        CREATE TABLE Invoice(
-        id INT PRIMARY KEY,
-        user_id INT NOT NULL,
-        status TEXT NOT NULL, 
-        paid_at DATE NULLABLE,
-        due_date DATE NOT NULL,
-        FOREIGN KEY (status) REFERENCES InvoiceStatus(status)
-
-        )
-        """
-        )
-
 def createUserTable():
-    connection = sqlite3.connect("academy.db")
     cur.execute(
         """
         CREATE TABLE User(
@@ -37,7 +25,6 @@ def createUserTable():
         """
         )
 def createProfileTable():
-    connection = sqlite3.connect("academy.db")
     cur.execute(
         """
         CREATE TABLE ProfileAcademy(
@@ -45,6 +32,68 @@ def createProfileTable():
         user_id INT NOT NULL,
         academy_id INT NOT NULL, 
         FOREIGN KEY (user_id) REFERENCES User(id)
+        )
+        """
+        )
+
+def createCohortTable():
+    cur.execute(
+        """
+        CREATE TABLE CohortUser(
+        id INT PRIMARY KEY,
+        user_id INT NOT NULL,
+        cohort_id INT NOT NULL, 
+        educational_status TEXT NOT NULL,
+        financial_status TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES User(id)
+
+        )
+        """
+        )
+
+def createSubscriptionStatusTable():
+    cur.execute("""
+    CREATE TABLE SubscriptionStatus (
+    id INT PRIMARY KEY,
+    status VARCHAR(50) UNIQUE NOT NULL
+    )
+    """
+    )
+
+def createSubscriptionTable():
+    cur.execute(
+        """
+        CREATE TABLE CohortUser(
+        id INT PRIMARY KEY,
+        user_id INT NOT NULL,
+        status TEXT NOT NULL, 
+        FOREIGN KEY (status) REFERENCES InvoiceStatus(status),
+        FOREIGN KEY (user_id) REFERENCES User(id)
+        )
+        """
+        )
+
+def createInvoiceStatusTable():
+    cur.execute("""
+    CREATE TABLE InvoiceStatus (
+    id INT PRIMARY KEY,
+    status_name VARCHAR(50) UNIQUE NOT NULL
+    )
+    """
+    )
+
+def createInvoiceTable():
+    cur.execute(
+        """
+        CREATE TABLE Invoice(
+        id INT PRIMARY KEY,
+        user_id INT NOT NULL,
+        status TEXT NOT NULL, 
+        paid_at DATE NULLABLE,
+        due_date DATE NOT NULL,
+        FOREIGN KEY (status) REFERENCES InvoiceStatus(status),
+        FOREIGN KEY (user_id) REFERENCES User(id)
+
         )
         """
         )
@@ -76,6 +125,17 @@ def insertCohortRow():
     """)
     connection.commit() 
 
+def insertSubscriptionStatusRow():
+    cur.execute("""INSERT INTO SubscriptionStatus (id, status) VALUES
+    (1, 'active'),
+    (2, 'trialing'),
+    (3, 'past_due'),
+    (4, 'canceled'),
+    (5, 'paused'),
+    (6, 'expired'),
+    (7, 'unpaid')
+    """)
+
 def insertSubscriptionRow():
     cur.execute("""INSERT INTO Subscription VALUES 
     (1, 1, 'canceled'),
@@ -83,6 +143,14 @@ def insertSubscriptionRow():
     (3, 3, 'past_due')
     """)
     connection.commit() 
+
+def insertInvoiceStatusRow():
+    cur.execute("""INSERT INTO InvoiceStatus (id, status) VALUES
+    (1, 'paid'),
+    (2, 'open'),
+    (3, 'uncollectible'),
+    (4, 'void');
+    """)
 
 def insertInvoiceRow():
     cur.execute("""INSERT INTO Invoice VALUES 

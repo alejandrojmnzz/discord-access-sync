@@ -18,7 +18,7 @@ Dentro del archivo `.env.example` se encuentran todas las variables de entorno n
 
 `DISCORD_BOT_TOKEN` hace referencia al ID del bot dentro del servidor que se utilizará.  
 
-`GUILD_ID` es el ID del servidor de Discord desde el que el bot funcionará. Para efectos prácticos, uitlizar el servidor de prueba "Academy Server" en el que se encuentra el bot, cuyo ID es 1386815148777406588.  
+`GUILD_ID` es el ID del servidor de Discord desde el que el bot funcionará. Para efectos prácticos, utilizar el servidor de prueba "Academy Server" en el que se encuentra el bot, cuyo ID es 1386815148777406588.  
 
 `ROLE_ID` es el ID del rol que se le quiere asignar o eliminar a los usuarios. El servidor de prueba ya tiene un rol "Member" creado, su ID es 1405645722396917812.  
 

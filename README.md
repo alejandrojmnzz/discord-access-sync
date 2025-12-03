@@ -1,6 +1,6 @@
 # discord-access-sync
 
-Aplicación que utiliza discord.py y SQLite para agregar y eliminar roles a usuarios que no cumplan los requisitos para ser miembro en el servidor de Discord de la academia. Los usuarios en la base de datos están manualmente agregados para que coincidan con los del servidor de Discord.
+Aplicación que utiliza discord.py y SQLite para agregar y eliminar roles a usuarios que no cumplan los requisitos para ser miembro en el servidor de Discord de la academia. Los usuarios en la base de datos están manualmente agregados para que coincidan con los del servidor de Discord. 
 
 **Cómo ejecutar la aplicación**
 

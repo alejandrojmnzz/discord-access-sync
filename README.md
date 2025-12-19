@@ -27,3 +27,5 @@ Dentro del archivo `.env.example` se encuentran todas las variables de entorno n
 `GRACE_DAYS` son los días adicionales que se le quiere dar al usuario para renovar su pago después de la fecha de expiración, una vez acabados se le eliminará el rol.  
 
 `DRY_RUN` refiere a la intención de hacer una run de prueba en el código. Si se declara como "true" , se ejecuta la aplicación a manera de test, consultando los usuarios en la base de datos pero sin realizar las acciones de agregar y eliminar sus roles en Discord, solo se imprime un mensaje simulando la acción. Si se declara como "false", la aplicación se ejecuta como normalmente lo haría.
+
+test
